@@ -1,0 +1,9 @@
+[submodule "deps/io-uring"]
+	path = deps/io-uring
+	url = git@github.com:ShuochengWang/io-uring.git
+[submodule "deps/sharded-slab"]
+	path = deps/sharded-slab
+	url = git@github.com:ShuochengWang/sharded-slab.git
+[submodule "deps/untrusted_allocator"]
+	path = deps/untrusted_allocator
+	url = git@github.com:ShuochengWang/untrusted_allocator.git
