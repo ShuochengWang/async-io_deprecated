@@ -7,3 +7,6 @@
 [submodule "deps/untrusted_allocator"]
 	path = deps/untrusted_allocator
 	url = git@github.com:ShuochengWang/untrusted_allocator.git
+[submodule "deps/slab"]
+	path = deps/slab
+	url = git@github.com:ShuochengWang/slab.git
