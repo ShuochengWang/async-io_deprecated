@@ -40,7 +40,8 @@ sgx_ucrypto = { path = "../../../sgx_ucrypto" }
 sgx_unwind = { path = "../../../sgx_unwind" }
 sgx_urts = { path = "../../../sgx_urts" }
 
-[dependencies]
-io-uring = { path = "../deps/io-uring", default-features = false, features = [ "sgx-feature" ] }
+[target.'cfg(sgx)'.dependencies]
+io-uring = { path = "../deps/io-uring" }
 untrusted_allocator = { path = "../deps/untrusted_allocator" }
-slab = { path = "../deps/slab", default-features = false, features = [ "sgx-feature" ] }
+slab = { path = "../deps/slab" }
+sharded-slab = { path = "../deps/sharded-slab" }
