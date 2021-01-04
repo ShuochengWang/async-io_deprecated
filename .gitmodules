@@ -10,3 +10,7 @@
 [submodule "deps/slab"]
 	path = deps/slab
 	url = git@github.com:ShuochengWang/slab.git
+[submodule "deps/io-uring-callback"]
+	path = deps/io-uring-callback
+	url = git@github.com:tatetian/io-uring-callback.git
+	branch = sgx

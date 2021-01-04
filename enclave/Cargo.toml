@@ -41,6 +41,7 @@ sgx_unwind = { path = "../../../sgx_unwind" }
 sgx_urts = { path = "../../../sgx_urts" }
 
 [target.'cfg(sgx)'.dependencies]
+io_uring_callback = { path = "../deps/io-uring-callback" }
 io-uring = { path = "../deps/io-uring" }
 untrusted_allocator = { path = "../deps/untrusted_allocator" }
 slab = { path = "../deps/slab" }
