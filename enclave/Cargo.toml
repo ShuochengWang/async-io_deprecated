@@ -46,3 +46,4 @@ io-uring = { path = "../deps/io-uring" }
 untrusted_allocator = { path = "../deps/untrusted_allocator" }
 slab = { path = "../deps/slab" }
 sharded-slab = { path = "../deps/sharded-slab" }
+lazy_static = { version = "1.4.0", features = ["spin_no_std"] }

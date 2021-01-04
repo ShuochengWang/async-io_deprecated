@@ -26,16 +26,21 @@ extern crate sgx_types;
 #[macro_use]
 extern crate sgx_tstd as std;
 extern crate io_uring;
+extern crate io_uring_callback;
 extern crate untrusted_allocator;
 extern crate slab;
+extern crate sharded_slab;
+extern crate lazy_static;
 
 use sgx_types::*;
 
 mod tcp_echo_io_uring;
+mod tcp_echo_io_uring_callback;
 
 #[no_mangle]
 pub extern "C" fn run_io_uring_example() -> sgx_status_t {
     println!("[ECALL] run_io_uring_example");
 
-    tcp_echo_io_uring::tcp_echo_io_uring()
+    // tcp_echo_io_uring::tcp_echo_io_uring()
+    tcp_echo_io_uring_callback::tcp_echo_io_uring_callback()
 }
