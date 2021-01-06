@@ -14,6 +14,7 @@ pub fn tcp_echo_io_uring() -> sgx_status_t {
     println!("[ECALL] init untrusted_allocator success");
     // init io_uring
     let mut ring = IoUring::new(256).unwrap();
+    ring.start_enter_syscall_thread();
     println!("[ECALL] init io_uring success");
 
     let socket_fd = unsafe { libc::ocall::socket(libc::AF_INET, libc::SOCK_STREAM, 0) };
@@ -84,8 +85,6 @@ pub fn tcp_echo_io_uring() -> sgx_status_t {
     let mut accept = AcceptCount::new(socket_fd, token_alloc.insert(Token::Accept), 3);
 
     accept.push(&mut sq.available());
-
-    submitter.start_enter_syscall_thread();
 
     loop {
         match submitter.submit_and_wait(1) {

@@ -13,17 +13,11 @@ use untrusted_allocator::{init_untrusted_allocator, UntrustedAllocator};
 
 lazy_static! {
     static ref TOKEN_QUEUE: Mutex<VecDeque<(Token, i32)>> = Mutex::new(VecDeque::new());
-    static ref HANDLE_SLAB: sharded_slab::Slab<Handle> = sharded_slab::Slab::new();
+    static ref HANDLE_SLAB: Mutex<slab::Slab<Handle>> = Mutex::new(slab::Slab::new());
 }
 
 pub fn tcp_echo_io_uring_callback() -> sgx_status_t {
-    std::backtrace::enable_backtrace("enclave.signed.so", std::backtrace::PrintFormat::Full);
-
-    let tmp = sharded_slab::Slab::<Option<i32>>::new();
-    let tmp_entry = tmp.vacant_entry().unwrap();
-    let tmp_key = tmp_entry.key();
-    println!("{}", tmp_key);
-
+    // std::backtrace::enable_backtrace("enclave.signed.so", std::backtrace::PrintFormat::Full);
 
     // init untrusted_allocator
     init_untrusted_allocator(128 * 1024 * 1024);
@@ -112,14 +106,15 @@ pub fn tcp_echo_io_uring_callback() -> sgx_status_t {
                     let fd = ret;
 
                     let to_complete_token = Token::Poll { fd };
-                    let slab_entry = HANDLE_SLAB.vacant_entry().unwrap();
+                    let mut handle_slab = HANDLE_SLAB.lock().unwrap();
+                    let slab_entry = handle_slab.vacant_entry();
                     let slab_key = slab_entry.key();
 
                     let complete_fn = move |retval: i32| {
                         let mut queue = TOKEN_QUEUE.lock().unwrap();
                         queue.push_back((to_complete_token, retval));
 
-                        HANDLE_SLAB.remove(slab_key);
+                        HANDLE_SLAB.lock().unwrap().remove(slab_key);
                     };
 
                     let handle =
@@ -139,14 +134,15 @@ pub fn tcp_echo_io_uring_callback() -> sgx_status_t {
                     };
 
                     let to_complete_token = Token::Read { fd, buf_index };
-                    let slab_entry = HANDLE_SLAB.vacant_entry().unwrap();
+                    let mut handle_slab = HANDLE_SLAB.lock().unwrap();
+                    let slab_entry = handle_slab.vacant_entry();
                     let slab_key = slab_entry.key();
 
                     let complete_fn = move |retval: i32| {
                         let mut queue = TOKEN_QUEUE.lock().unwrap();
                         queue.push_back((to_complete_token, retval));
 
-                        HANDLE_SLAB.remove(slab_key);
+                        HANDLE_SLAB.lock().unwrap().remove(slab_key);
                     };
 
                     let handle = unsafe {
@@ -181,14 +177,15 @@ pub fn tcp_echo_io_uring_callback() -> sgx_status_t {
                             len,
                             offset: 0,
                         };
-                        let slab_entry = HANDLE_SLAB.vacant_entry().unwrap();
+                        let mut handle_slab = HANDLE_SLAB.lock().unwrap();
+                        let slab_entry = handle_slab.vacant_entry();
                         let slab_key = slab_entry.key();
 
                         let complete_fn = move |retval: i32| {
                             let mut queue = TOKEN_QUEUE.lock().unwrap();
                             queue.push_back((to_complete_token, retval));
 
-                            HANDLE_SLAB.remove(slab_key);
+                            HANDLE_SLAB.lock().unwrap().remove(slab_key);
                         };
 
                         let handle = unsafe {
@@ -210,14 +207,15 @@ pub fn tcp_echo_io_uring_callback() -> sgx_status_t {
                         bufpool.push(buf_index);
 
                         let to_complete_token = Token::Poll { fd };
-                        let slab_entry = HANDLE_SLAB.vacant_entry().unwrap();
+                        let mut handle_slab = HANDLE_SLAB.lock().unwrap();
+                        let slab_entry = handle_slab.vacant_entry();
                         let slab_key = slab_entry.key();
 
                         let complete_fn = move |retval: i32| {
                             let mut queue = TOKEN_QUEUE.lock().unwrap();
                             queue.push_back((to_complete_token, retval));
 
-                            HANDLE_SLAB.remove(slab_key);
+                            HANDLE_SLAB.lock().unwrap().remove(slab_key);
                         };
 
                         let handle =
@@ -236,14 +234,15 @@ pub fn tcp_echo_io_uring_callback() -> sgx_status_t {
                             offset,
                             len,
                         };
-                        let slab_entry = HANDLE_SLAB.vacant_entry().unwrap();
+                        let mut handle_slab = HANDLE_SLAB.lock().unwrap();
+                        let slab_entry = handle_slab.vacant_entry();
                         let slab_key = slab_entry.key();
 
                         let complete_fn = move |retval: i32| {
                             let mut queue = TOKEN_QUEUE.lock().unwrap();
                             queue.push_back((to_complete_token, retval));
 
-                            HANDLE_SLAB.remove(slab_key);
+                            HANDLE_SLAB.lock().unwrap().remove(slab_key);
                         };
 
                         let handle = unsafe {
@@ -292,19 +291,20 @@ impl AcceptCount {
     pub fn try_push_accept(&mut self, ring: &IoUring) {
         while self.count > 0 {
             let to_complete_token = Token::Accept;
-            let slab_entry = HANDLE_SLAB.vacant_entry().unwrap();
+            let mut handle_slab = HANDLE_SLAB.lock().unwrap();
+            let slab_entry = handle_slab.vacant_entry();
             let slab_key = slab_entry.key();
 
             let complete_fn = move |retval: i32| {
                 let mut queue = TOKEN_QUEUE.lock().unwrap();
                 queue.push_back((to_complete_token, retval));
 
-                HANDLE_SLAB.remove(slab_key);
+                HANDLE_SLAB.lock().unwrap().remove(slab_key);
             };
 
             let handle =
                 unsafe { ring.accept(self.fd, ptr::null_mut(), ptr::null_mut(), 0, complete_fn) };
-
+            
             slab_entry.insert(handle);
 
             self.count -= 1;
